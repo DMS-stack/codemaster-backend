@@ -1,7 +1,7 @@
 -- migrations/001_conquistas.sql
 
 -- Tabela de conquistas disponíveis
-CREATE TABLE conquistas (
+CREATE TABLE IF NOT EXISTS conquistas (
   id SERIAL PRIMARY KEY,
   nome VARCHAR(100) NOT NULL,
   descricao TEXT,
@@ -16,7 +16,7 @@ CREATE TABLE conquistas (
 );
 
 -- Conquistas dos usuários
-CREATE TABLE conquistas_usuario (
+CREATE TABLE IF NOT EXISTS conquistas_usuario (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   usuario_id UUID REFERENCES usuarios(id) ON DELETE CASCADE,
   conquista_id INTEGER REFERENCES conquistas(id),
