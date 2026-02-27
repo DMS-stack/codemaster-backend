@@ -55,17 +55,32 @@ async function setup() {
     `);
     console.log('✅ tabela: inscricoes');
 
+    // Primeiro verifica se a constraint UNIQUE existe, se não, adiciona
     await client.query(`
       CREATE TABLE IF NOT EXISTS modulos (
         id        SERIAL PRIMARY KEY,
         nome      VARCHAR(100) NOT NULL,
         descricao TEXT,
         icone     VARCHAR(10),
-        ordem     INT NOT NULL UNIQUE,
+        ordem     INT NOT NULL,
         ativo     BOOLEAN DEFAULT true
       );
     `);
-    console.log('✅ tabela: modulos');
+    
+    // Adiciona constraint UNIQUE na coluna ordem se não existir
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint 
+          WHERE conname = 'modulos_ordem_key' 
+          AND conrelid = 'modulos'::regclass
+        ) THEN
+          ALTER TABLE modulos ADD CONSTRAINT modulos_ordem_key UNIQUE (ordem);
+        END IF;
+      END $$;
+    `);
+    console.log('✅ tabela: modulos (com unique em ordem)');
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS topicos (
@@ -112,6 +127,7 @@ async function setup() {
     ];
     
     for (const m of modulos) {
+      // Primeiro tenta inserir, se conflito, atualiza
       await client.query(
         `INSERT INTO modulos (nome, descricao, icone, ordem)
          VALUES ($1, $2, $3, $4)
